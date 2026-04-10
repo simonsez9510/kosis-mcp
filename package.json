@@ -1,0 +1,23 @@
+{
+  "name": "kosis-mcp",
+  "version": "1.0.0",
+  "description": "KOSIS 국가통계포털 MCP Server — 통계목록, 통계자료, 통합검색, 주요지표 등 7개 서비스",
+  "type": "module",
+  "main": "build/index.js",
+  "bin": {
+    "kosis-mcp": "build/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "start": "node build/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.0",
+    "tsx": "^4.19.0"
+  }
+}
