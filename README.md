@@ -304,6 +304,45 @@ kosis_indicator({ jipyoId: "DT_1B04005N" })
 | 21 | 잘못된 파라미터 | kosis_table_info로 유효값 확인 |
 | 31 | 40,000셀 초과 | 분류/기간 범위를 좁혀서 재조회 |
 
+## 테스트
+
+```bash
+npm test
+```
+
+26개 항목을 자동 점검합니다 (서버 초기화, 도구 등록, 검색, 지역코드 매핑 3종, 데이터 조회, 목록, 통계표설명).
+
+### 테스트 하네스 재사용
+
+`test/harness.ts`는 **어떤 MCP 서버에서든 재사용**할 수 있는 범용 테스트 프레임워크입니다.
+
+다른 MCP 프로젝트에 적용하려면:
+
+1. `test/harness.ts`를 복사
+2. `test/run.ts`에 해당 MCP 전용 테스트 시나리오 작성
+3. `npm test`로 실행
+
+```typescript
+import { McpTestHarness } from "./harness.js";
+
+const harness = new McpTestHarness("build/index.js", {
+  MY_API_KEY: "..."
+});
+
+await harness.start();
+
+// 도구 목록 검증
+const tools = await harness.listTools();
+
+// 도구 호출 테스트
+const result = await harness.callTool("my_tool", { param: "value" });
+console.log(result.text, result.isError);
+
+await harness.stop();
+```
+
+실제로 [local-finance-mcp](https://github.com/simonsez9510/local-finance-mcp)에서 동일한 harness.ts를 복사해 32개 테스트를 구성했습니다.
+
 ## 라이선스
 
 MIT
