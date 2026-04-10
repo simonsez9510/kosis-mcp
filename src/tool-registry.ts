@@ -13,6 +13,7 @@ import { statisticsListSchema, getStatisticsList } from "./tools/statistics-list
 import { statisticsMetaSchema, getStatisticsMeta } from "./tools/statistics-meta.js";
 import { tableMetaSchema, getTableMeta } from "./tools/table-meta.js";
 import { keyIndicatorSchema, getKeyIndicator } from "./tools/key-indicator.js";
+import { findRegionCodeSchema, findRegionCode } from "./tools/find-region-code.js";
 
 function zodToJsonSchema(schema: Record<string, unknown>): Record<string, unknown> {
   // zod 스키마에서 JSON Schema 변환 (간이)
@@ -117,6 +118,23 @@ const TOOLS = [
       required: ["jipyoId"],
     },
   },
+  {
+    name: "kosis_region_code",
+    description:
+      "KOSIS 지역코드 자동 매핑 — 테이블마다 다른 지역코드를 자연어(인천 서구)로 찾아줌. kosis_get_data 전에 반드시 사용",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        tblId: { type: "string", description: "통계표ID (예: DT_1YL20631)" },
+        orgId: { type: "string", description: "기관코드 (기본: 101)" },
+        region: {
+          type: "string",
+          description: "지역명 (예: 인천 서구, 서울 강남구, 남동구)",
+        },
+      },
+      required: ["tblId", "region"],
+    },
+  },
 ];
 
 export function registerTools(server: Server, client: KosisApiClient): void {
@@ -148,6 +166,9 @@ export function registerTools(server: Server, client: KosisApiClient): void {
           break;
         case "kosis_indicator":
           result = await getKeyIndicator(client, keyIndicatorSchema.parse(args));
+          break;
+        case "kosis_region_code":
+          result = await findRegionCode(client, findRegionCodeSchema.parse(args));
           break;
         default:
           result = `알 수 없는 도구: ${name}`;
