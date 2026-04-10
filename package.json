@@ -10,7 +10,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/index.ts",
-    "start": "node build/index.js"
+    "start": "node build/index.js",
+    "test": "tsx test/run.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
