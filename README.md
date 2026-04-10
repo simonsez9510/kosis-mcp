@@ -4,12 +4,13 @@ KOSIS(국가통계포털) OpenAPI를 [Model Context Protocol](https://modelconte
 
 인구, 경제, 고용, 물가, 산업 등 **국가통계 전 분야**를 AI 에이전트에서 직접 조회할 수 있습니다.
 
-## 제공 도구 (6개)
+## 제공 도구 (7개)
 
 | 도구 | 설명 | 주요 용도 |
 |------|------|----------|
 | `kosis_search` | 통합검색 — 키워드로 통계표 검색 | orgId, tblId를 찾는 첫 단계 |
 | `kosis_get_data` | 통계자료 조회 — 실제 데이터 조회 | 핵심 도구. 수치 데이터 확보 |
+| `kosis_region_code` | 지역코드 자동 매핑 — 자연어로 코드 검색 | **kosis_get_data 전에 필수** |
 | `kosis_list` | 통계목록 — 주제별/기관별 목록 탐색 | 어떤 통계가 있는지 탐색 |
 | `kosis_meta` | 통계설명자료 — 작성목적, 법적근거 등 | 통계 메타 정보 확인 |
 | `kosis_table_info` | 통계표설명 — 분류항목, 단위, 출처 등 | 데이터 구조 파악 |
@@ -57,8 +58,11 @@ KOSIS 데이터를 조회하려면 보통 **2단계**로 진행합니다:
 
 ```
 1단계: kosis_search로 통계표 검색 → orgId, tblId 확인
-2단계: kosis_get_data로 실제 데이터 조회
+2단계: kosis_region_code로 지역코드 확인 → objL1 코드 확보
+3단계: kosis_get_data로 실제 데이터 조회
 ```
+
+> **중요:** KOSIS는 테이블마다 지역코드 체계가 다릅니다 (행안부 코드, SGG 순번, 압축코드 등). `kosis_region_code`를 사용하면 "인천 서구" 같은 자연어로 정확한 코드를 자동으로 찾아줍니다.
 
 ### 1. 통합검색 (kosis_search)
 
@@ -81,7 +85,32 @@ kosis_search({ keyword: "실업률" })
 통계표ID: DT_1DA7104S
 ```
 
-### 2. 통계자료 조회 (kosis_get_data)
+### 2. 지역코드 매핑 (kosis_region_code)
+
+특정 지역의 통계를 조회하려면 먼저 해당 테이블의 지역코드를 확인해야 합니다.
+
+```
+kosis_region_code({ tblId: "DT_1YL20631", region: "인천 서구" })
+```
+
+**응답 예시:**
+```
+지역: 인천광역시 서구
+코드(objL1): 23080
+사용법: kosis_get_data({ orgId: "101", tblId: "DT_1YL20631", objL1: "23080" })
+```
+
+**파라미터:**
+- `tblId` (필수): 통계표ID
+- `region` (필수): 지역명 (예: `인천 서구`, `서울 강남구`, `남동구`)
+- `orgId`: 기관코드 (기본 101)
+
+> **왜 필요한가?** 같은 인천 서구라도 테이블마다 코드가 다릅니다:
+> - 주민등록인구: `28260` (행안부 코드)
+> - 고령인구비율: `23080` (SGG 순번코드)
+> - 실업률(시군구): `2308` (압축코드)
+
+### 3. 통계자료 조회 (kosis_get_data)
 
 검색으로 찾은 `orgId`, `tblId`로 실제 수치 데이터를 조회합니다.
 
@@ -208,7 +237,24 @@ kosis_indicator({ jipyoId: "DT_1B04005N" })
    → 2025.12: 4.1% | 2026.01: 4.1% | 2026.02: 3.4%
 ```
 
-### 예시 2: 주민등록 인구수 연도별
+### 예시 2: 인천 서구 고령인구비율 (지역코드 매핑 활용)
+
+```
+1. kosis_search({ keyword: "고령인구비율" })
+   → orgId: 101, tblId: DT_1YL20631
+
+2. kosis_region_code({ tblId: "DT_1YL20631", region: "인천 서구" })
+   → objL1: 23080
+
+3. kosis_get_data({
+     orgId: "101", tblId: "DT_1YL20631",
+     objL1: "23080", itmId: "T10",
+     prdSe: "Y", newEstPrdCnt: 5
+   })
+   → 2021: 11.4% | 2023: 12.4% | 2025: 14.3%
+```
+
+### 예시 3: 주민등록 인구수 연도별
 
 ```
 1. kosis_search({ keyword: "주민등록인구" })
